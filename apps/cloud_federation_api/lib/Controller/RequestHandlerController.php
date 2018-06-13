@@ -35,6 +35,7 @@ use OCP\Federation\ICloudFederationFactory;
 use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Federation\Exceptions\ProviderDoesNotExistsException;
 use OCP\Federation\ICloudIdManager;
+use OCP\IGroupManager;
 use OCP\ILogger;
 use OCP\IRequest;
 use OCP\IURLGenerator;
@@ -57,6 +58,9 @@ class RequestHandlerController extends Controller {
 	/** @var IUserManager */
 	private $userManager;
 
+	/** @var IGroupManager */
+	private $groupManager;
+
 	/** @var IURLGenerator */
 	private $urlGenerator;
 
@@ -76,6 +80,7 @@ class RequestHandlerController extends Controller {
 								IRequest $request,
 								ILogger $logger,
 								IUserManager $userManager,
+								IGroupManager $groupManager,
 								IURLGenerator $urlGenerator,
 								ICloudFederationProviderManager $cloudFederationProviderManager,
 								Config $config,
@@ -86,6 +91,7 @@ class RequestHandlerController extends Controller {
 
 		$this->logger = $logger;
 		$this->userManager = $userManager;
+		$this->groupManager = $groupManager;
 		$this->urlGenerator = $urlGenerator;
 		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
 		$this->config = $config;
@@ -136,7 +142,7 @@ class RequestHandlerController extends Controller {
 			);
 		}
 
-		$supportedShareTypes = $this->config->getSupportedShareTypes();
+		$supportedShareTypes = $this->config->getSupportedShareTypes($resourceType);
 		if (!in_array($shareType, $supportedShareTypes)) {
 			return new JSONResponse(
 				['message' => 'Share type "' . $shareType . '" not implemented'],
@@ -146,13 +152,25 @@ class RequestHandlerController extends Controller {
 
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWithLocalId = $cloudId->getUser();
-		$shareWith = $this->mapUid($shareWithLocalId);
 
-		if (!$this->userManager->userExists($shareWith)) {
-			return new JSONResponse(
-				['message' => 'User "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
-				Http::STATUS_BAD_REQUEST
-			);
+		if ($shareType === 'user') {
+			$shareWith = $this->mapUid($shareWithLocalId);
+
+			if (!$this->userManager->userExists($shareWith)) {
+				return new JSONResponse(
+					['message' => 'User "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
+					Http::STATUS_BAD_REQUEST
+				);
+			}
+		}
+
+		if ($shareType === 'group') {
+			if(!$this->groupManager->groupExists($shareWithLocalId)) {
+				return new JSONResponse(
+					['message' => 'Group "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
+					Http::STATUS_BAD_REQUEST
+				);
+			}
 		}
 
 		// if no explicit display name is given, we use the uid as display name
@@ -169,7 +187,7 @@ class RequestHandlerController extends Controller {
 			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
 			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
 			$share->setProtocol($protocol);
-			$id = $provider->shareReceived($share);
+			$provider->shareReceived($share);
 		} catch (ProviderDoesNotExistsException $e) {
 			return new JSONResponse(
 				['message' => $e->getMessage()],
