@@ -257,7 +257,8 @@ class FederatedShareProvider implements IShareProvider {
 				$share->getShareOwner(),
 				$ownerCloudId->getId(),
 				$share->getSharedBy(),
-				$sharedByFederatedId
+				$sharedByFederatedId,
+				$share->setShareType()
 			);
 
 			if ($send === false) {

@@ -136,6 +136,14 @@ class RequestHandlerController extends Controller {
 			);
 		}
 
+		$supportedShareTypes = $this->config->getSupportedShareTypes();
+		if (!in_array($shareType, $supportedShareTypes)) {
+			return new JSONResponse(
+				['message' => 'Share type "' . $shareType . '" not implemented'],
+				Http::STATUS_NOT_IMPLEMENTED
+			);
+		}
+
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
 		$shareWithLocalId = $cloudId->getUser();
 		$shareWith = $this->mapUid($shareWithLocalId);
