@@ -78,7 +78,7 @@ class ProviderUserAssignmentDaoTest extends TestCase {
 	public function testPersist() {
 		$qb = $this->dbConn->getQueryBuilder();
 
-		$this->dao->persist('twofactor_totp', 'user123', false);
+		$this->dao->persist('twofactor_totp', 'user123', 0);
 
 		$q = $qb
 			->select('*')
@@ -86,7 +86,7 @@ class ProviderUserAssignmentDaoTest extends TestCase {
 			->where($qb->expr()->eq('provider_id',
 					$qb->createNamedParameter('twofactor_totp')))
 			->andWhere($qb->expr()->eq('uid', $qb->createNamedParameter('user123')))
-			->andWhere($qb->expr()->eq('enabled', $qb->createNamedParameter(false)));
+			->andWhere($qb->expr()->eq('enabled', $qb->createNamedParameter(0)));
 		$res = $q->execute();
 		$cnt = $res->rowCount();
 

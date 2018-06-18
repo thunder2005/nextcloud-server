@@ -45,11 +45,11 @@ class Registry implements IRegistry {
 	}
 
 	public function enableProviderFor(IProvider $provider, IUser $user) {
-		$this->assignmentDao->persist($provider->getId(), $user->getUID(), true);
+		$this->assignmentDao->persist($provider->getId(), $user->getUID(), 1);
 	}
 
 	public function disableProviderFor(IProvider $provider, IUser $user) {
-		$this->assignmentDao->persist($provider->getId(), $user->getUID(), false);
+		$this->assignmentDao->persist($provider->getId(), $user->getUID(), 0);
 	}
 
 }

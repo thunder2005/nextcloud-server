@@ -69,7 +69,7 @@ class ProviderUserAssignmentDao {
 	/**
 	 * Persist a new/updated (provider_id, uid, enabled) tuple
 	 */
-	public function persist(string $providerId, string $uid, bool $enabled) {
+	public function persist(string $providerId, string $uid, int $enabled) {
 		$qb = $this->conn->getQueryBuilder();
 
 		// TODO: concurrency? What if (providerId, uid) private key is inserted
@@ -77,7 +77,7 @@ class ProviderUserAssignmentDao {
 		$query = $qb->insert(self::TABLE_NAME)->values([
 			'provider_id' => $qb->createNamedParameter($providerId),
 			'uid' => $qb->createNamedParameter($uid),
-			'enabled' => $qb->createNamedParameter($enabled, IQueryBuilder::PARAM_BOOL),
+			'enabled' => $qb->createNamedParameter($enabled, IQueryBuilder::PARAM_INT),
 		]);
 
 		$query->execute();
