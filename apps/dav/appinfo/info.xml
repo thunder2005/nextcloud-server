@@ -21,6 +21,7 @@
 
 	<background-jobs>
 		<job>OCA\DAV\BackgroundJob\CleanupDirectLinksJob</job>
+		<job>OCA\DAV\BackgroundJob\GenerateBirthdayCalendarBackgroundJob</job>
 	</background-jobs>
 
 	<repair-steps>
