@@ -90,6 +90,7 @@ class UserStoragesServiceTest extends StoragesServiceTest {
 		$newStorage = $this->service->addStorage($storage);
 
 		$id = $newStorage->getId();
+		var_dump("added: $id");
 
 		$newStorage = $this->service->getStorage($id);
 
@@ -125,6 +126,8 @@ class UserStoragesServiceTest extends StoragesServiceTest {
 		]);
 
 		$newStorage = $this->service->addStorage($storage);
+		$id = $newStorage->getId();
+		var_dump("update: $id");
 
 		$backendOptions = $newStorage->getBackendOptions();
 		$backendOptions['password'] = 'anotherPassword';

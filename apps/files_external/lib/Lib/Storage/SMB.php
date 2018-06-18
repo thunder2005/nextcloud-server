@@ -89,7 +89,7 @@ class SMB extends Common implements INotifyStorage {
 			$this->root = '/' . ltrim($this->root, '/');
 			$this->root = rtrim($this->root, '/') . '/';
 		} else {
-			throw new \Exception('Invalid configuration');
+			throw new \Exception('Invalid configuration: ' . json_encode($params));
 		}
 		$this->statCache = new CappedMemoryCache();
 		parent::__construct($params);

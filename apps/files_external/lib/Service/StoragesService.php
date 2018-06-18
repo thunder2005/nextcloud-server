@@ -461,6 +461,7 @@ abstract class StoragesService {
 	 */
 	public function removeStorage($id) {
 		$existingMount = $this->dbConfig->getMountById($id);
+		var_dump($id);
 
 		if (!is_array($existingMount)) {
 			throw new NotFoundException('Storage with ID "' . $id . '" not found');
@@ -474,11 +475,13 @@ abstract class StoragesService {
 		// delete oc_storages entries and oc_filecache
 		try {
 			$rustyStorageId = $this->getRustyStorageIdFromConfig($deletedStorage);
+			error_log($rustyStorageId);
 			\OC\Files\Cache\Storage::remove($rustyStorageId);
 		} catch (\Exception $e) {
 			// can happen either for invalid configs where the storage could not
 			// be instantiated or whenever $user vars where used, in which case
 			// the storage id could not be computed
+			var_dump($e);
 			\OC::$server->getLogger()->logException($e, [
 				'level' => ILogger::ERROR,
 				'app' => 'files_external',
