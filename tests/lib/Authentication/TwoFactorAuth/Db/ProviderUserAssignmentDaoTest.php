@@ -56,13 +56,13 @@ class ProviderUserAssignmentDaoTest extends TestCase {
 		$q1 = $qb->insert(ProviderUserAssignmentDao::TABLE_NAME)->values([
 			'provider_id' => $qb->createNamedParameter('twofactor_u2f'),
 			'uid' => $qb->createNamedParameter('user123'),
-			'enabled' => $qb->createNamedParameter(true),
+			'enabled' => $qb->createNamedParameter(1),
 		]);
 		$q1->execute();
 		$q2 = $qb->insert(ProviderUserAssignmentDao::TABLE_NAME)->values([
 			'provider_id' => $qb->createNamedParameter('twofactor_totp'),
 			'uid' => $qb->createNamedParameter('user123'),
-			'enabled' => $qb->createNamedParameter(false),
+			'enabled' => $qb->createNamedParameter(0),
 		]);
 		$q2->execute();
 		$expected = [
