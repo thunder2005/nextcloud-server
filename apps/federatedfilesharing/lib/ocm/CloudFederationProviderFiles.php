@@ -40,10 +40,12 @@ use OCP\Federation\ICloudFederationShare;
 use OCP\Federation\ICloudIdManager;
 use OCP\Files\NotFoundException;
 use OCP\IDBConnection;
+use OCP\IGroupManager;
 use OCP\ILogger;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
 use OCP\Notification\IManager as INotificationManager;
+use OCP\Share;
 use OCP\Share\Exceptions\ShareNotFound;
 use OCP\Share\IShare;
 use OCP\Util;
@@ -86,6 +88,9 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 	/** @var IDBConnection */
 	private $connection;
 
+	/** @var IGroupManager */
+	private $groupManager;
+
 	/**
 	 * CloudFederationProvider constructor.
 	 *
@@ -101,6 +106,7 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 	 * @param ICloudFederationFactory $cloudFederationFactory
 	 * @param ICloudFederationProviderManager $cloudFederationProviderManager
 	 * @param IDBConnection $connection
+	 * @param IGroupManager $groupManager
 	 */
 	public function __construct(IAppManager $appManager,
 								FederatedShareProvider $federatedShareProvider,
@@ -113,7 +119,8 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 								IURLGenerator $urlGenerator,
 								ICloudFederationFactory $cloudFederationFactory,
 								ICloudFederationProviderManager $cloudFederationProviderManager,
-								IDBConnection $connection
+								IDBConnection $connection,
+								IGroupManager $groupManager
 	) {
 		$this->appManager = $appManager;
 		$this->federatedShareProvider = $federatedShareProvider;
@@ -127,6 +134,7 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 		$this->cloudFederationFactory = $cloudFederationFactory;
 		$this->cloudFederationProviderManager = $cloudFederationProviderManager;
 		$this->connection = $connection;
+		$this->groupManager = $groupManager;
 	}
 
 
@@ -175,6 +183,7 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 		$remoteId = $share->getProviderId();
 		$sharedByFederatedId = $share->getSharedBy();
 		$ownerFederatedId = $share->getOwner();
+		$shareType = $this->mapShareTypeToNextcloud($share->getShareType());
 
 		// if no explicit information about the person who created the share was send
 		// we assume that the share comes from the owner
@@ -217,7 +226,7 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 			);
 
 			try {
-				$externalManager->addShare($remote, $token, '', $name, $owner, false, $shareWith, $remoteId);
+				$externalManager->addShare($remote, $token, '', $name, $owner, $shareType,false, $shareWith, $remoteId);
 				$shareId = \OC::$server->getDatabaseConnection()->lastInsertId('*PREFIX*share_external');
 
 				$event = $this->activityManager->generateEvent();
@@ -228,25 +237,14 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 					->setObject('remote_share', (int)$shareId, $name);
 				\OC::$server->getActivityManager()->publish($event);
 
-				$notification = $this->notificationManager->createNotification();
-				$notification->setApp('files_sharing')
-					->setUser($shareWith)
-					->setDateTime(new \DateTime())
-					->setObject('remote_share', $shareId)
-					->setSubject('remote_share', [$ownerFederatedId, $sharedByFederatedId, trim($name, '/')]);
-
-				$declineAction = $notification->createAction();
-				$declineAction->setLabel('decline')
-					->setLink($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkTo('', 'ocs/v2.php/apps/files_sharing/api/v1/remote_shares/pending/' . $shareId)), 'DELETE');
-				$notification->addAction($declineAction);
-
-				$acceptAction = $notification->createAction();
-				$acceptAction->setLabel('accept')
-					->setLink($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkTo('', 'ocs/v2.php/apps/files_sharing/api/v1/remote_shares/pending/' . $shareId)), 'POST');
-				$notification->addAction($acceptAction);
-
-				$this->notificationManager->notify($notification);
-
+				if ($shareType === Share::SHARE_TYPE_USER) {
+					$this->notifyAboutNewShare($shareWith, $shareId, $ownerFederatedId, $sharedByFederatedId, $name);
+				} else {
+					$groupMembers = $this->groupManager->get($shareWith)->getUsers();
+					foreach ($groupMembers as $user) {
+						$this->notifyAboutNewShare($user, $shareId, $ownerFederatedId, $sharedByFederatedId, $name);
+					}
+				}
 				return $shareId;
 			} catch (\Exception $e) {
 				$this->logger->logException($e, [
@@ -295,6 +293,51 @@ class CloudFederationProviderFiles implements ICloudFederationProvider {
 
 
 		throw new BadRequestException([$notificationType]);
+	}
+
+	/**
+	 * map OCM share type (strings) to Nextcloud internal share types (integer)
+	 *
+	 * @param string $shareType
+	 * @return int
+	 */
+	private function mapShareTypeToNextcloud($shareType) {
+		$result = Share::SHARE_TYPE_USER;
+		if ($shareType === 'group') {
+			$result = Share::SHARE_TYPE_GROUP;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * notify user about new federated share
+	 *
+	 * @param $shareWith
+	 * @param $shareId
+	 * @param $ownerFederatedId
+	 * @param $sharedByFederatedId
+	 * @param $name
+	 */
+	private function notifyAboutNewShare($shareWith, $shareId, $ownerFederatedId, $sharedByFederatedId, $name) {
+		$notification = $this->notificationManager->createNotification();
+		$notification->setApp('files_sharing')
+			->setUser($shareWith)
+			->setDateTime(new \DateTime())
+			->setObject('remote_share', $shareId)
+			->setSubject('remote_share', [$ownerFederatedId, $sharedByFederatedId, trim($name, '/')]);
+
+		$declineAction = $notification->createAction();
+		$declineAction->setLabel('decline')
+			->setLink($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkTo('', 'ocs/v2.php/apps/files_sharing/api/v1/remote_shares/pending/' . $shareId)), 'DELETE');
+		$notification->addAction($declineAction);
+
+		$acceptAction = $notification->createAction();
+		$acceptAction->setLabel('accept')
+			->setLink($this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkTo('', 'ocs/v2.php/apps/files_sharing/api/v1/remote_shares/pending/' . $shareId)), 'POST');
+		$notification->addAction($acceptAction);
+
+		$this->notificationManager->notify($notification);
 	}
 
 	/**
