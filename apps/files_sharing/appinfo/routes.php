@@ -80,6 +80,19 @@ return [
 			'verb' => 'DELETE',
 		],
 		/*
+		 * Deleted Shares
+		 */
+		[
+			'name' => 'DeletedShareAPI#index',
+			'url'  => '/api/v1/deletedshares',
+			'verb' => 'GET',
+		],
+		[
+			'name' => 'DeletedShareAPI#undelete',
+			'url'  => '/api/v1/deletedshares/{id}',
+			'verb' => 'POST',
+		],
+		/*
 		 * OCS Sharee API
 		 */
 		[
