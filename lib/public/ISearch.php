@@ -65,4 +65,10 @@ interface ISearch {
 	 */
 	public function clearProviders();
 
+	/**
+	 * Do we have registered search providers ?
+	 * @since 14.0.0
+	 */
+	public function hasProviders();
+
 }

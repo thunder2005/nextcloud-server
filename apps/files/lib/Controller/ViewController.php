@@ -31,16 +31,18 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\ContentSecurityPolicy;
 use OCP\AppFramework\Http\RedirectResponse;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\App\IAppManager;
+use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\ISearch;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
+use OC\Search\Provider\File;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use OCP\Files\Folder;
-use OCP\App\IAppManager;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
@@ -67,6 +69,8 @@ class ViewController extends Controller {
 	protected $appManager;
 	/** @var IRootFolder */
 	protected $rootFolder;
+	/** @var ISearch */
+	protected $search;
 
 	/**
 	 * @param string $appName
@@ -78,6 +82,7 @@ class ViewController extends Controller {
 	 * @param IUserSession $userSession
 	 * @param IAppManager $appManager
 	 * @param IRootFolder $rootFolder
+	 * @param ISearch $search
 	 */
 	public function __construct($appName,
 								IRequest $request,
@@ -87,7 +92,8 @@ class ViewController extends Controller {
 								EventDispatcherInterface $eventDispatcherInterface,
 								IUserSession $userSession,
 								IAppManager $appManager,
-								IRootFolder $rootFolder
+								IRootFolder $rootFolder,
+								ISearch $search
 	) {
 		parent::__construct($appName, $request);
 		$this->appName = $appName;
@@ -99,6 +105,7 @@ class ViewController extends Controller {
 		$this->userSession = $userSession;
 		$this->appManager = $appManager;
 		$this->rootFolder = $rootFolder;
+		$this->search = $search;
 	}
 
 	/**
@@ -154,6 +161,9 @@ class ViewController extends Controller {
 		// Load the files we need
 		\OCP\Util::addStyle('files', 'merged');
 		\OCP\Util::addScript('files', 'merged-index');
+
+		// Register search provider
+		$this->search->registerProvider(File::class, array('apps' => array('files')));
 
 		// mostly for the home storage's free space
 		// FIXME: Make non static

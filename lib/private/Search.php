@@ -79,6 +79,13 @@ class Search implements ISearch {
 	}
 
 	/**
+	 * Do we have registered search providers ?
+	 */
+	public function hasProviders() {
+		return $this->registeredProviders;
+	}
+
+	/**
 	 * Remove one existing search provider
 	 * @param string $provider class name of a OC\Search\Provider
 	 */
