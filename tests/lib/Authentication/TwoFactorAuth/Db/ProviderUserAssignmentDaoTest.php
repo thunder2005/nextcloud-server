@@ -46,7 +46,7 @@ class ProviderUserAssignmentDaoTest extends TestCase {
 		$this->dbConn = OC::$server->getDatabaseConnection();
 		$qb = $this->dbConn->getQueryBuilder();
 		$q = $qb->delete(ProviderUserAssignmentDao::TABLE_NAME);
-		$res = $q->execute();
+		$q->execute();
 
 		$this->dao = new ProviderUserAssignmentDao($this->dbConn);
 	}
@@ -83,13 +83,11 @@ class ProviderUserAssignmentDaoTest extends TestCase {
 		$q = $qb
 			->select('*')
 			->from(ProviderUserAssignmentDao::TABLE_NAME)
-			->where($qb->expr()->eq('provider_id',
-					$qb->createNamedParameter('twofactor_totp')))
+			->where($qb->expr()->eq('provider_id', $qb->createNamedParameter('twofactor_totp')))
 			->andWhere($qb->expr()->eq('uid', $qb->createNamedParameter('user123')))
 			->andWhere($qb->expr()->eq('enabled', $qb->createNamedParameter(0)));
 		$res = $q->execute();
 		$cnt = $res->rowCount();
-
 		$this->assertSame(1, $cnt);
 	}
 

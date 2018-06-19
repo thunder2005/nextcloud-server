@@ -37,12 +37,12 @@ class Version14000Date20180522074438 extends SimpleMigrationStep {
 	 * @param array $options
 	 */
 	public function preSchemaChange(IOutput $output, Closure $schemaClosure,
-		array $options) {
-		
+									array $options) {
+
 	}
 
 	public function changeSchema(IOutput $output, Closure $schemaClosure,
-		array $options): ISchemaWrapper {
+								 array $options): ISchemaWrapper {
 
 		$schema = $schemaClosure();
 
@@ -50,19 +50,19 @@ class Version14000Date20180522074438 extends SimpleMigrationStep {
 			$table = $schema->createTable('twofactor_providers');
 			$table->addColumn('provider_id', 'string',
 				[
-				'notnull' => true,
-				'length' => 32,
-			]);
+					'notnull' => true,
+					'length' => 32,
+				]);
 			$table->addColumn('uid', 'string',
 				[
-				'notnull' => true,
-				'length' => 64,
-			]);
+					'notnull' => true,
+					'length' => 64,
+				]);
 			$table->addColumn('enabled', 'smallint',
 				[
-				'notnull' => true,
-				'length' => 1,
-			]);
+					'notnull' => true,
+					'length' => 1,
+				]);
 			$table->setPrimaryKey(['provider_id', 'uid']);
 		}
 
@@ -75,8 +75,8 @@ class Version14000Date20180522074438 extends SimpleMigrationStep {
 	 * @param array $options
 	 */
 	public function postSchemaChange(IOutput $output, Closure $schemaClosure,
-		array $options) {
-		
+									 array $options) {
+
 	}
 
 }
