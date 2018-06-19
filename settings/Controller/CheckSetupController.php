@@ -513,6 +513,10 @@ Raw output
 		];
 	}
 
+	protected function isPhpMailerUsed(): bool {
+		return $this->config->getSystemValue('mail_smtpmode', 'smtp') === 'php';
+	}
+
 	/**
 	 * @return DataResponse
 	 */
@@ -547,6 +551,7 @@ Raw output
 				'missingIndexes' => $this->hasMissingIndexes(),
 				'isSqliteUsed' => $this->isSqliteUsed(),
 				'databaseConversionDocumentation' => $this->urlGenerator->linkToDocs('admin-db-conversion'),
+				'isPhpMailerUsed' => $this->isPhpMailerUsed(),
 			]
 		);
 	}

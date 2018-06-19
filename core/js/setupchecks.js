@@ -293,6 +293,15 @@
 							type: OC.SetupChecks.MESSAGE_TYPE_WARNING
 						})
 					}
+					if (data.isPhpMailerUsed) {
+						messages.push({
+							msg: t(
+								'core',
+								'Use of the the built in php mailer is no longer supported. Please update your e-mail settings.'
+							),
+							type: OC.SetupChecks.MESSAGE_TYPE_WARNING
+						});
+					}
 				} else {
 					messages.push({
 						msg: t('core', 'Error occurred while checking server setup'),
